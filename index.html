@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Apartashower 🏡 | Lista de Regalos</title>
+  <meta name="description" content="Lista de regalos para mi Apartashower. Escoge lo que quieres llevar y hazlo tuyo antes que otro lo tome." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ======= FONDO DECORATIVO ======= -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="leaf-deco" aria-hidden="true">
+    <span class="leaf l1">🌿</span>
+    <span class="leaf l2">🍃</span>
+    <span class="leaf l3">🌱</span>
+    <span class="leaf l4">🌿</span>
+  </div>
+
+  <!-- ======= MODAL: BIENVENIDA / NOMBRE ======= -->
+  <div id="modal-bienvenida" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <div class="modal-box" id="modal-box-bienvenida">
+      <div class="modal-icon">🏡</div>
+      <h1 id="modal-titulo">¡Bienvenid@ a mi Apartashower!</h1>
+      <p class="modal-desc">
+        Este es mi nuevo hogar y me alegra tenerte aquí. 🌿<br/>
+        Para que no haya regalos repetidos, escoge de la lista lo que quieres llevar.<br/>
+        <strong>Primero, ¿cuál es tu nombre?</strong>
+      </p>
+      <div class="input-group">
+        <input
+          type="text"
+          id="input-nombre"
+          placeholder="Tu nombre aquí..."
+          maxlength="40"
+          autocomplete="off"
+          aria-label="Tu nombre"
+        />
+      </div>
+      <p id="error-nombre" class="error-msg" aria-live="polite"></p>
+      <button id="btn-entrar" class="btn-primary" onclick="entrarConNombre()">
+        Ver la lista 🎁
+      </button>
+    </div>
+  </div>
+
+  <!-- ======= MODAL: CONFIRMAR REGALO ======= -->
+  <div id="modal-confirmar" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-titulo">
+    <div class="modal-box" id="modal-box-confirmar">
+      <div class="modal-icon" id="confirm-emoji">🎁</div>
+      <h2 id="confirm-titulo">¿Confirmas que llevarás este regalo?</h2>
+      <div class="confirm-product-card">
+        <p id="confirm-nombre-producto" class="confirm-product-name"></p>
+        <p id="confirm-precio-producto" class="confirm-product-price"></p>
+      </div>
+      <p class="confirm-hint">Una vez confirmado, el regalo quedará reservado para ti y los demás no podrán elegirlo.</p>
+      <div class="modal-actions">
+        <button id="btn-cancelar-confirm" class="btn-secondary" onclick="cerrarConfirmar()">Cancelar</button>
+        <button id="btn-confirmar" class="btn-primary" onclick="confirmarRegalo()">¡Sí, lo llevo! 🎉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= MAIN APP ======= -->
+  <main id="app" class="app hidden">
+
+    <!-- HEADER -->
+    <header class="site-header">
+      <div class="header-content">
+        <div class="header-tag">🌱 Lista de Regalos</div>
+        <h1 class="site-title">Mi Apartashower</h1>
+        <p class="site-subtitle">
+          Escoge algo de la lista y hazlo tuyo antes que alguien más lo tome. ✨<br/>
+          Cada regalo ayuda a construir este nuevo hogar con amor.
+        </p>
+        <div class="stats-bar">
+          <div class="stat-item">
+            <span class="stat-number" id="stat-disponibles">—</span>
+            <span class="stat-label">disponibles</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-number" id="stat-tomados">—</span>
+            <span class="stat-label">ya reservados</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- FILTROS -->
+    <section class="filtros-section" aria-label="Filtrar productos">
+      <div class="filtros-container">
+        <button class="filtro-btn active" data-filtro="todos" onclick="filtrar(this, 'todos')" id="filtro-todos">
+          Todo 🌟
+        </button>
+        <button class="filtro-btn" data-filtro="cocina" onclick="filtrar(this, 'cocina')" id="filtro-cocina">
+          Cocina 🍳
+        </button>
+        <button class="filtro-btn" data-filtro="deco" onclick="filtrar(this, 'deco')" id="filtro-deco">
+          Decoración 🪴
+        </button>
+        <button class="filtro-btn" data-filtro="bano" onclick="filtrar(this, 'bano')" id="filtro-bano">
+          Baño 🚿
+        </button>
+        <button class="filtro-btn" data-filtro="hogar" onclick="filtrar(this, 'hogar')" id="filtro-hogar">
+          Hogar 🏠
+        </button>
+      </div>
+    </section>
+
+    <!-- GRID DE PRODUCTOS -->
+    <section class="productos-section" aria-label="Lista de regalos">
+      <div class="productos-grid" id="productos-grid">
+        <!-- Skeleton loaders -->
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <p>Hecho con 💚 para celebrar este nuevo comienzo · <span id="footer-usuario"></span></p>
+    </footer>
+
+  </main>
+
+  <!-- ======= TOAST NOTIFICACIÓN ======= -->
+  <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
+
+
+
+  <script src="app.js"></script>
+</body>
+</html>
