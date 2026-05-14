@@ -44,6 +44,13 @@
           autocomplete="off"
           aria-label="Tu nombre"
         />
+        <input
+          type="email"
+          id="input-email"
+          placeholder="Tu correo electrónico..."
+          autocomplete="off"
+          aria-label="Tu correo electrónico"
+        />
       </div>
       <p id="error-nombre" class="error-msg" aria-live="polite"></p>
       <button id="btn-entrar" class="btn-primary" onclick="entrarConNombre()">
@@ -72,6 +79,17 @@
   <!-- ======= MAIN APP ======= -->
   <main id="app" class="app hidden">
 
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="top-bar-user">
+        <span class="user-avatar">👤</span>
+        <span id="top-bar-nombre">Invitado</span>
+      </div>
+      <button class="btn-mis-regalos" onclick="abrirMisRegalos()">
+        🎁 Mis Regalos <span id="badge-mis-regalos" class="badge">0</span>
+      </button>
+    </div>
+
     <!-- HEADER -->
     <header class="site-header">
       <div class="header-content">
@@ -94,6 +112,16 @@
         </div>
       </div>
     </header>
+
+    <!-- GAMIFICATION: TOP PADRINOS -->
+    <section class="ranking-section" aria-label="Ranking de Padrinos">
+      <div class="ranking-container">
+        <h3 class="ranking-title">🏆 Top Padrinos</h3>
+        <div class="ranking-list" id="ranking-list">
+          <div class="skeleton-ranking"></div>
+        </div>
+      </div>
+    </section>
 
     <!-- FILTROS -->
     <section class="filtros-section" aria-label="Filtrar productos">
@@ -138,6 +166,21 @@
 
   <!-- ======= TOAST NOTIFICACIÓN ======= -->
   <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
+
+  <!-- ======= MODAL: MIS REGALOS ======= -->
+  <div id="modal-mis-regalos" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mis-regalos-titulo">
+    <div class="modal-box modal-box-large" id="modal-box-mis-regalos">
+      <div class="modal-header-flex">
+        <h2 id="mis-regalos-titulo">Mis Regalos 🎁</h2>
+        <button class="btn-close" onclick="cerrarMisRegalos()" aria-label="Cerrar modal">×</button>
+      </div>
+      <p class="modal-desc">Estos son los regalos que has reservado. ¡Mil gracias por tu generosidad! 🌿</p>
+      
+      <div class="mis-regalos-list" id="mis-regalos-list">
+        <!-- Llenado por JS -->
+      </div>
+    </div>
+  </div>
 
 
 

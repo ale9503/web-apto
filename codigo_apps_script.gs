@@ -35,11 +35,15 @@ function doGet(e) {
   const accion = e.parameter.accion || "leer";
 
   if (accion === "leer") {
-    return leerProductos();
+    return leerProductos(e.parameter.email);
   }
 
   if (accion === "reservar") {
-    return reservarProducto(e.parameter.id, e.parameter.quien);
+    return reservarProducto(e.parameter.id, e.parameter.quien, e.parameter.email);
+  }
+
+  if (accion === "cancelar") {
+    return cancelarProducto(e.parameter.id, e.parameter.email);
   }
 
   return respuesta({ error: "Acción no válida" });
@@ -48,7 +52,7 @@ function doGet(e) {
 // ================================================
 //  LEER — devuelve todos los productos con estado
 // ================================================
-function leerProductos() {
+function leerProductos(emailSolicitante) {
   const hoja = obtenerHoja();
   const datos = hoja.getDataRange().getValues();
   const encabezados = datos[0];
@@ -56,7 +60,13 @@ function leerProductos() {
 
   const productos = filas.map(function(fila) {
     const obj = {};
-    encabezados.forEach(function(enc, i) { obj[enc] = fila[i]; });
+    encabezados.forEach(function(enc, i) { 
+      if (enc !== "email") {
+        obj[enc] = fila[i]; 
+      } else {
+        obj.esMio = (emailSolicitante && String(fila[i]).toLowerCase() === String(emailSolicitante).toLowerCase());
+      }
+    });
     return obj;
   });
 
@@ -66,8 +76,8 @@ function leerProductos() {
 // ================================================
 //  RESERVAR — marca un producto como tomado
 // ================================================
-function reservarProducto(id, quien) {
-  if (!id || !quien) {
+function reservarProducto(id, quien, email) {
+  if (!id || !quien || !email) {
     return respuesta({ exito: false, error: "Faltan datos" });
   }
 
@@ -85,6 +95,38 @@ function reservarProducto(id, quien) {
       // Marcar como reservado
       hoja.getRange(i + 1, 3).setValue(true);
       hoja.getRange(i + 1, 4).setValue(quien);
+      hoja.getRange(i + 1, 5).setValue(email);
+      SpreadsheetApp.flush();
+      return respuesta({ exito: true });
+    }
+  }
+
+  return respuesta({ exito: false, error: "Producto no encontrado" });
+}
+
+// ================================================
+//  CANCELAR — libera un producto si el email coincide
+// ================================================
+function cancelarProducto(id, email) {
+  if (!id || !email) {
+    return respuesta({ exito: false, error: "Faltan datos" });
+  }
+
+  const hoja = obtenerHoja();
+  const datos = hoja.getDataRange().getValues();
+
+  for (var i = 1; i < datos.length; i++) {
+    if (String(datos[i][0]) === String(id)) {
+      
+      const emailGuardado = String(datos[i][4] || "").toLowerCase();
+      if (emailGuardado !== String(email).toLowerCase()) {
+        return respuesta({ exito: false, error: "No tienes permiso para cancelar este regalo." });
+      }
+
+      // Liberar
+      hoja.getRange(i + 1, 3).setValue(false);
+      hoja.getRange(i + 1, 4).setValue("");
+      hoja.getRange(i + 1, 5).setValue("");
       SpreadsheetApp.flush();
       return respuesta({ exito: true });
     }
@@ -110,14 +152,14 @@ function inicializarHoja(hoja) {
   if (hoja.getLastRow() > 0) return; // ya tiene datos
 
   // Encabezados
-  hoja.getRange(1, 1, 1, 4).setValues([["id", "nombre", "tomado", "quien"]]);
+  hoja.getRange(1, 1, 1, 5).setValues([["id", "nombre", "tomado", "quien", "email"]]);
 
   // Productos
-  var filas = PRODUCTOS.map(function(p) { return [p.id, p.nombre, false, ""]; });
-  hoja.getRange(2, 1, filas.length, 4).setValues(filas);
+  var filas = PRODUCTOS.map(function(p) { return [p.id, p.nombre, false, "", ""]; });
+  hoja.getRange(2, 1, filas.length, 5).setValues(filas);
 
   // Estilo encabezado
-  hoja.getRange(1, 1, 1, 4)
+  hoja.getRange(1, 1, 1, 5)
     .setFontWeight("bold")
     .setBackground("#1a4031")
     .setFontColor("#ffffff");

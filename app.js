@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────
 // 1. URL DEL APPS SCRIPT
 // ─────────────────────────────────────────
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3bbcEdVxdyFCpTdUCbYI101CC4BCwb_Sd3ZXrR-GybW-XT2tJnB_6L1W1F8nBBU6InQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJRuGKwckjTcQ5Vqd_pjnALVZ3QSS0ZvZLTemIQD4FXjL-wFpaJeByg_WIlx5aZjh8/exec";
 
 // ─────────────────────────────────────────
 // 2. PRODUCTOS — mismos IDs que el Sheet
@@ -37,6 +37,7 @@ const PRODUCTOS_DETALLE = {
 // 3. ESTADO GLOBAL
 // ─────────────────────────────────────────
 let nombreUsuario   = "";
+let emailUsuario    = "";
 let productoSeleccionado = null;
 let filtroActivo    = "todos";
 let productosCache  = [];       // últimos datos del Sheet
@@ -46,27 +47,43 @@ let intervaloPolling = null;
 // 4. ENTRADA DEL USUARIO
 // ─────────────────────────────────────────
 function entrarConNombre() {
-  const input  = document.getElementById("input-nombre");
-  const nombre = input.value.trim();
+  const inputNombre = document.getElementById("input-nombre");
+  const inputEmail  = document.getElementById("input-email");
+  const nombre = inputNombre.value.trim();
+  const email  = inputEmail.value.trim();
 
   if (!nombre || nombre.length < 2) {
     const err = document.getElementById("error-nombre");
-    err.textContent = "Por favor escribe al menos 2 caracteres 🌿";
-    input.focus();
+    err.textContent = "Por favor escribe al menos 2 caracteres en el nombre 🌿";
+    inputNombre.focus();
+    return;
+  }
+
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    const err = document.getElementById("error-nombre");
+    err.textContent = "Por favor escribe un correo válido 📧";
+    inputEmail.focus();
     return;
   }
 
   nombreUsuario = nombre;
+  emailUsuario  = email;
+  
+  document.getElementById("top-bar-nombre").textContent = nombre;
   document.getElementById("footer-usuario").textContent = `Conectad@ como ${nombre}`;
   document.getElementById("modal-bienvenida").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
 
   cargarProductos();
-  // Refrescar cada 10 segundos para ver si alguien más reservó
   intervaloPolling = setInterval(cargarProductos, 10000);
 }
 
 document.getElementById("input-nombre").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("input-email").focus();
+  document.getElementById("error-nombre").textContent = "";
+});
+
+document.getElementById("input-email").addEventListener("keydown", (e) => {
   if (e.key === "Enter") entrarConNombre();
   document.getElementById("error-nombre").textContent = "";
 });
@@ -75,13 +92,16 @@ document.getElementById("input-nombre").addEventListener("keydown", (e) => {
 // 5. LEER DATOS DEL SHEET
 // ─────────────────────────────────────────
 function cargarProductos() {
-  fetch(`${SCRIPT_URL}?accion=leer`)
+  const url = `${SCRIPT_URL}?accion=leer&email=${encodeURIComponent(emailUsuario)}`;
+  fetch(url)
     .then(r => r.json())
     .then(data => {
       if (data.productos) {
         productosCache = data.productos;
         renderizarProductos();
         actualizarStats();
+        renderizarRanking();
+        actualizarMisRegalos();
       }
     })
     .catch(() => {
@@ -203,7 +223,7 @@ function confirmarRegalo() {
   btn.disabled    = true;
   btn.textContent = "Guardando...";
 
-  const url = `${SCRIPT_URL}?accion=reservar&id=${encodeURIComponent(productoSeleccionado)}&quien=${encodeURIComponent(nombreUsuario)}`;
+  const url = `${SCRIPT_URL}?accion=reservar&id=${encodeURIComponent(productoSeleccionado)}&quien=${encodeURIComponent(nombreUsuario)}&email=${encodeURIComponent(emailUsuario)}`;
 
   fetch(url)
     .then(r => r.json())
@@ -211,7 +231,7 @@ function confirmarRegalo() {
       if (data.exito) {
         cerrarConfirmar();
         mostrarToast(`¡Perfecto ${nombreUsuario}! Tu regalo está reservado 🎉`);
-        cargarProductos(); // refrescar inmediatamente
+        cargarProductos();
       } else {
         mostrarToast(`⚠️ ${data.error || "No se pudo reservar. Intenta de nuevo."}`);
         cerrarConfirmar();
@@ -225,6 +245,111 @@ function confirmarRegalo() {
       btn.disabled    = false;
       btn.textContent = "¡Sí, lo llevo! 🎉";
     });
+}
+
+// ─────────────────────────────────────────
+// 9.5 CANCELAR, MIS REGALOS Y RANKING
+// ─────────────────────────────────────────
+function abrirMisRegalos() {
+  document.getElementById("modal-mis-regalos").classList.remove("hidden");
+  actualizarMisRegalos();
+}
+
+function cerrarMisRegalos() {
+  document.getElementById("modal-mis-regalos").classList.add("hidden");
+}
+
+function actualizarMisRegalos() {
+  const misRegalos = productosCache.filter(p => p.esMio === true);
+  document.getElementById("badge-mis-regalos").textContent = misRegalos.length;
+
+  const list = document.getElementById("mis-regalos-list");
+  if (misRegalos.length === 0) {
+    list.innerHTML = `<p class="confirm-hint" style="text-align:center; padding: 2rem;">Aún no has reservado ningún regalo.</p>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  misRegalos.forEach(p => {
+    const det = PRODUCTOS_DETALLE[p.id] || {};
+    const item = document.createElement("div");
+    item.className = "mis-regalo-item";
+    item.innerHTML = `
+      <div class="mis-regalo-info">
+        <span class="mis-regalo-emoji">${det.emoji || "🎁"}</span>
+        <div class="mis-regalo-text">
+          <h4>${escapeHtml(p.nombre)}</h4>
+          <p>${formatPrecio(det.precio || 0)}</p>
+        </div>
+      </div>
+      <button class="btn-quitar" onclick="cancelarRegalo('${p.id}')" id="btn-cancelar-${p.id}">
+        Quitar
+      </button>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function cancelarRegalo(id) {
+  if (!confirm("¿Seguro que quieres quitar este regalo de tu lista?")) return;
+
+  const btn = document.getElementById(`btn-cancelar-${id}`);
+  if (btn) { btn.disabled = true; btn.textContent = "⏳"; }
+
+  const url = `${SCRIPT_URL}?accion=cancelar&id=${encodeURIComponent(id)}&email=${encodeURIComponent(emailUsuario)}`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (data.exito) {
+        mostrarToast("Regalo liberado correctamente.");
+        cargarProductos();
+      } else {
+        mostrarToast(`⚠️ ${data.error || "No se pudo cancelar."}`);
+      }
+    })
+    .catch(() => mostrarToast("⚠️ Error de conexión."))
+    .finally(() => {
+      if (btn) { btn.disabled = false; btn.textContent = "Quitar"; }
+    });
+}
+
+function renderizarRanking() {
+  const conteo = {};
+  productosCache.forEach(p => {
+    const tomado = p.tomado === true || String(p.tomado).toUpperCase() === "TRUE";
+    if (tomado && p.quien) {
+      conteo[p.quien] = (conteo[p.quien] || 0) + 1;
+    }
+  });
+
+  const ranking = Object.keys(conteo)
+    .map(nombre => ({ nombre, puntaje: conteo[nombre] }))
+    .sort((a, b) => b.puntaje - a.puntaje)
+    .slice(0, 3);
+
+  const list = document.getElementById("ranking-list");
+  
+  if (ranking.length === 0) {
+    list.innerHTML = `<span class="card-descripcion">Aún no hay padrinos. ¡Sé el primero! 🌱</span>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  const medallas = ["🥇", "🥈", "🥉"];
+  
+  ranking.forEach((user, index) => {
+    const item = document.createElement("div");
+    item.className = "ranking-item";
+    item.innerHTML = `
+      <span class="ranking-medal">${medallas[index] || "🏅"}</span>
+      <div class="ranking-info">
+        <span class="ranking-name">${escapeHtml(user.nombre)}</span>
+        <span class="ranking-score">${user.puntaje} regalo${user.puntaje > 1 ? 's' : ''}</span>
+      </div>
+    `;
+    list.appendChild(item);
+  });
 }
 
 // ─────────────────────────────────────────
