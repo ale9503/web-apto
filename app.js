@@ -36,12 +36,21 @@ const PRODUCTOS_DETALLE = {
 // ─────────────────────────────────────────
 // 3. ESTADO GLOBAL
 // ─────────────────────────────────────────
-let nombreUsuario   = "";
-let emailUsuario    = "";
-let productoSeleccionado = null;
+let nombreUsuario   = localStorage.getItem("apto_nombre") || "";
+let emailUsuario    = localStorage.getItem("apto_email") || "";
+let productoPendiente = null;
 let filtroActivo    = "todos";
 let productosCache  = [];       // últimos datos del Sheet
 let intervaloPolling = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (nombreUsuario && emailUsuario) {
+    document.getElementById("top-bar-nombre").textContent = nombreUsuario;
+    document.getElementById("footer-usuario").textContent = `Conectad@ como ${nombreUsuario}`;
+  }
+  cargarProductos();
+  intervaloPolling = setInterval(cargarProductos, 10000);
+});
 
 // ─────────────────────────────────────────
 // 4. ENTRADA DEL USUARIO
@@ -69,13 +78,23 @@ function entrarConNombre() {
   nombreUsuario = nombre;
   emailUsuario  = email;
   
+  localStorage.setItem("apto_nombre", nombre);
+  localStorage.setItem("apto_email", email);
+  
   document.getElementById("top-bar-nombre").textContent = nombre;
   document.getElementById("footer-usuario").textContent = `Conectad@ como ${nombre}`;
-  document.getElementById("modal-bienvenida").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("modal-auth").classList.add("hidden");
 
-  cargarProductos();
-  intervaloPolling = setInterval(cargarProductos, 10000);
+  if (productoPendiente === "mis_regalos") {
+    productoPendiente = null;
+    abrirMisRegalos();
+  } else if (productoPendiente) {
+    const id = productoPendiente;
+    productoPendiente = null;
+    abrirConfirmar(id);
+  } else {
+    cargarProductos();
+  }
 }
 
 document.getElementById("input-nombre").addEventListener("keydown", (e) => {
@@ -189,6 +208,12 @@ function filtrar(btn, categoria) {
 // 8. MODAL CONFIRMAR
 // ─────────────────────────────────────────
 function abrirConfirmar(id) {
+  if (!nombreUsuario || !emailUsuario) {
+    productoPendiente = id;
+    document.getElementById("modal-auth").classList.remove("hidden");
+    return;
+  }
+
   const producto = productosCache.find(p => p.id === id);
   if (!producto) return;
 
@@ -251,6 +276,11 @@ function confirmarRegalo() {
 // 9.5 CANCELAR, MIS REGALOS Y RANKING
 // ─────────────────────────────────────────
 function abrirMisRegalos() {
+  if (!nombreUsuario || !emailUsuario) {
+    productoPendiente = "mis_regalos";
+    document.getElementById("modal-auth").classList.remove("hidden");
+    return;
+  }
   document.getElementById("modal-mis-regalos").classList.remove("hidden");
   actualizarMisRegalos();
 }
