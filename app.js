@@ -13,24 +13,24 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJRuGKwckjTcQ5Vqd_p
 //    (aquí van los detalles visuales)
 // ─────────────────────────────────────────
 const PRODUCTOS_DETALLE = {
-  p01: { emoji: "🍳", descripcion: "Perfecta para el día a día en la cocina.",        precio: 145000, categoria: "cocina" },
-  p02: { emoji: "🫖", descripcion: "Elegante y duradera para la mesa.",               precio: 68000,  categoria: "cocina" },
-  p03: { emoji: "☕", descripcion: "Diseño minimalista con platos incluidos.",         precio: 95000,  categoria: "cocina" },
-  p04: { emoji: "🥄", descripcion: "Tenedores, cuchillos y cucharas.",                precio: 120000, categoria: "cocina" },
-  p05: { emoji: "🧑‍🍳", descripcion: "Resistente y ecológica. Grande.",              precio: 85000,  categoria: "cocina" },
-  p06: { emoji: "🪴", descripcion: "Trae naturaleza a cualquier rincón del hogar.",   precio: 75000,  categoria: "deco"   },
-  p07: { emoji: "🕯️", descripcion: "Fragancias de cedro, lavanda y vainilla.",        precio: 58000,  categoria: "deco"   },
-  p08: { emoji: "🖼️", descripcion: "Estilo nórdico, para pared o mesa. 20x25cm.",    precio: 62000,  categoria: "deco"   },
-  p09: { emoji: "🧺", descripcion: "Para especias, utensilios o decoración.",         precio: 80000,  categoria: "deco"   },
-  p10: { emoji: "💐", descripcion: "Minimalista. Ideal para flores naturales o secas.", precio: 55000, categoria: "deco"  },
-  p11: { emoji: "🚿", descripcion: "Dispensador + porta cepillos + vaso. 3 piezas.",  precio: 95000,  categoria: "bano"   },
-  p12: { emoji: "🛁", descripcion: "100% algodón. Color neutro. Talla adulto.",       precio: 88000,  categoria: "bano"   },
-  p13: { emoji: "🧴", descripcion: "Microfibra absorbente. Suave y lavable.",         precio: 55000,  categoria: "bano"   },
-  p14: { emoji: "🌿", descripcion: "Sal, pimienta, orégano, comino, ají y más.",      precio: 70000,  categoria: "cocina" },
-  p15: { emoji: "💡", descripcion: "Luz cálida, recargable por USB-C. Regulable.",    precio: 150000, categoria: "hogar"  },
-  p16: { emoji: "🛋️", descripcion: "Tejido premium, relleno antialérgico. 45x45cm.", precio: 65000,  categoria: "hogar"  },
-  p17: { emoji: "🧹", descripcion: "Escoba, recogedor y trapero plegable.",           precio: 110000, categoria: "hogar"  },
-  p18: { emoji: "🍷", descripcion: "Vidrio cristal. Elegantes y resistentes.",        precio: 98000,  categoria: "cocina" }
+  p01: { emoji: "🍳", descripcion: "Perfecta para el día a día en la cocina.",        precio: 145000, categoria: "cocina", url: "https://www.amazon.com/s?k=sarten+antiadherente+28cm" },
+  p02: { emoji: "🫖", descripcion: "Elegante y duradera para la mesa.",               precio: 68000,  categoria: "cocina", url: "https://www.amazon.com/s?k=jarra+vidrio" },
+  p03: { emoji: "☕", descripcion: "Diseño minimalista con platos incluidos.",         precio: 95000,  categoria: "cocina", url: "https://www.amazon.com/s?k=tazas+cafe" },
+  p04: { emoji: "🥄", descripcion: "Tenedores, cuchillos y cucharas.",                precio: 120000, categoria: "cocina", url: "https://www.amazon.com/s?k=cubiertos" },
+  p05: { emoji: "🧑‍🍳", descripcion: "Resistente y ecológica. Grande.",              precio: 85000,  categoria: "cocina", url: "https://www.amazon.com/s?k=tabla+picar+bambu" },
+  p06: { emoji: "🪴", descripcion: "Trae naturaleza a cualquier rincón del hogar.",   precio: 75000,  categoria: "deco",   url: "https://www.amazon.com/s?k=planta+interior+maceta" },
+  p07: { emoji: "🕯️", descripcion: "Fragancias de cedro, lavanda y vainilla.",        precio: 58000,  categoria: "deco",   url: "https://www.amazon.com/s?k=velas+aromaticas" },
+  p08: { emoji: "🖼️", descripcion: "Estilo nórdico, para pared o mesa. 20x25cm.",    precio: 62000,  categoria: "deco",   url: "https://www.amazon.com/s?k=marco+fotos+madera" },
+  p09: { emoji: "🧺", descripcion: "Para especias, utensilios o decoración.",         precio: 80000,  categoria: "deco",   url: "https://www.amazon.com/s?k=organizador+cocina+bambu" },
+  p10: { emoji: "💐", descripcion: "Minimalista. Ideal para flores naturales o secas.", precio: 55000, categoria: "deco",  url: "https://www.amazon.com/s?k=florero+vidrio" },
+  p11: { emoji: "🚿", descripcion: "Dispensador + porta cepillos + vaso. 3 piezas.",  precio: 95000,  categoria: "bano",   url: "https://www.amazon.com/s?k=accesorios+bano+bambu" },
+  p12: { emoji: "🛁", descripcion: "100% algodón. Color neutro. Talla adulto.",       precio: 88000,  categoria: "bano",   url: "https://www.amazon.com/s?k=toallas+bano+premium" },
+  p13: { emoji: "🧴", descripcion: "Microfibra absorbente. Suave y lavable.",         precio: 55000,  categoria: "bano",   url: "https://www.amazon.com/s?k=tapete+bano+antideslizante" },
+  p14: { emoji: "🌿", descripcion: "Sal, pimienta, orégano, comino, ají y más.",      precio: 70000,  categoria: "cocina", url: "https://www.amazon.com/s?k=set+especias" },
+  p15: { emoji: "💡", descripcion: "Luz cálida, recargable por USB-C. Regulable.",    precio: 150000, categoria: "hogar",  url: "https://www.amazon.com/s?k=lampara+mesa+led" },
+  p16: { emoji: "🛋️", descripcion: "Tejido premium, relleno antialérgico. 45x45cm.", precio: 65000,  categoria: "hogar",  url: "https://www.amazon.com/s?k=cojin+decorativo" },
+  p17: { emoji: "🧹", descripcion: "Escoba, recogedor y trapero plegable.",           precio: 110000, categoria: "hogar",  url: "https://www.amazon.com/s?k=set+limpieza" },
+  p18: { emoji: "🍷", descripcion: "Vidrio cristal. Elegantes y resistentes.",        precio: 98000,  categoria: "cocina", url: "https://www.amazon.com/s?k=copas+vino" }
 };
 
 // ─────────────────────────────────────────
@@ -172,6 +172,7 @@ function renderizarProductos() {
       <div class="card-categoria">${categoriaLabel(det.categoria)}</div>
       <h3 class="card-nombre">${escapeHtml(producto.nombre)}</h3>
       <p class="card-descripcion">${det.descripcion || ""}</p>
+      ${det.url ? `<a href="${det.url}" target="_blank" rel="noopener noreferrer" class="card-link-tienda" onclick="event.stopPropagation()">Ver en tienda 🛒</a>` : ""}
       <p class="card-precio">${formatPrecio(det.precio || 0)}</p>
       ${tomado
         ? `<p class="card-quien">🎁 ${escapeHtml(quien)} ya lo reservó</p>`
