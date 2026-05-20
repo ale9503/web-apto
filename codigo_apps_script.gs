@@ -39,7 +39,7 @@ function doGet(e) {
   }
 
   if (accion === "reservar") {
-    return reservarProducto(e.parameter.id, e.parameter.quien, e.parameter.email);
+    return reservarProducto(e.parameter.id, e.parameter.quien, e.parameter.email, e.parameter.mensaje || "");
   }
 
   if (accion === "cancelar") {
@@ -76,7 +76,7 @@ function leerProductos(emailSolicitante) {
 // ================================================
 //  RESERVAR — marca un producto como tomado
 // ================================================
-function reservarProducto(id, quien, email) {
+function reservarProducto(id, quien, email, mensaje) {
   if (!id || !quien || !email) {
     return respuesta({ exito: false, error: "Faltan datos" });
   }
@@ -89,13 +89,14 @@ function reservarProducto(id, quien, email) {
 
       // Ya está reservado
       if (datos[i][2] === true || String(datos[i][2]).toUpperCase() === "TRUE") {
-        return respuesta({ exito: false, error: "Ya reservado por " + datos[i][3] });
+        return respuesta({ exito: false, error: "Ya reservado" });
       }
 
       // Marcar como reservado
       hoja.getRange(i + 1, 3).setValue(true);
       hoja.getRange(i + 1, 4).setValue(quien);
       hoja.getRange(i + 1, 5).setValue(email);
+      hoja.getRange(i + 1, 6).setValue(mensaje || "");
       SpreadsheetApp.flush();
       return respuesta({ exito: true });
     }
@@ -127,6 +128,7 @@ function cancelarProducto(id, email) {
       hoja.getRange(i + 1, 3).setValue(false);
       hoja.getRange(i + 1, 4).setValue("");
       hoja.getRange(i + 1, 5).setValue("");
+      hoja.getRange(i + 1, 6).setValue("");
       SpreadsheetApp.flush();
       return respuesta({ exito: true });
     }
@@ -152,14 +154,14 @@ function inicializarHoja(hoja) {
   if (hoja.getLastRow() > 0) return; // ya tiene datos
 
   // Encabezados
-  hoja.getRange(1, 1, 1, 5).setValues([["id", "nombre", "tomado", "quien", "email"]]);
+  hoja.getRange(1, 1, 1, 6).setValues([["id", "nombre", "tomado", "quien", "email", "mensaje"]]);
 
   // Productos
-  var filas = PRODUCTOS.map(function(p) { return [p.id, p.nombre, false, "", ""]; });
-  hoja.getRange(2, 1, filas.length, 5).setValues(filas);
+  var filas = PRODUCTOS.map(function(p) { return [p.id, p.nombre, false, "", "", ""]; });
+  hoja.getRange(2, 1, filas.length, 6).setValues(filas);
 
   // Estilo encabezado
-  hoja.getRange(1, 1, 1, 5)
+  hoja.getRange(1, 1, 1, 6)
     .setFontWeight("bold")
     .setBackground("#1a4031")
     .setFontColor("#ffffff");

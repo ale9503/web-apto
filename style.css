@@ -367,6 +367,60 @@ body {
   line-height: 1.6;
 }
 
+/* Grupo de mensaje amigo secreto */
+.mensaje-grupo {
+  margin: 0.75rem 0 1rem;
+  text-align: left;
+}
+
+.mensaje-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.msg-opcional {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.input-mensaje {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--glass-border);
+  background: rgba(13, 40, 24, 0.6);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1.5;
+  outline: none;
+  resize: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input-mensaje::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.input-mensaje:focus {
+  border-color: var(--teal-glow);
+  box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.12);
+}
+
+.mensaje-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+  line-height: 1.5;
+  font-style: italic;
+}
+
 .modal-actions {
   display: flex;
   gap: 0.75rem;
@@ -444,6 +498,50 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ======= BARRA DE PROGRESO ======= */
+.progreso-container {
+  margin-top: 1.5rem;
+  padding: 0.85rem 1.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(12px);
+  animation: fadeSlideDown 0.6s ease 0.6s both;
+}
+
+.progreso-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.02em;
+}
+
+.progreso-label span:last-child {
+  font-weight: 700;
+  color: var(--teal-glow);
+  font-size: 0.9rem;
+}
+
+.progreso-track {
+  height: 8px;
+  background: rgba(13, 40, 24, 0.6);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  border: 1px solid rgba(82, 183, 136, 0.15);
+}
+
+.progreso-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--verde-salvia), var(--teal-glow));
+  border-radius: var(--radius-pill);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(0, 245, 212, 0.3);
+}
+
 /* ======= STATS BAR ======= */
 .stats-bar {
   display: inline-flex;
@@ -491,13 +589,35 @@ body {
   padding: 0 1.5rem 1.5rem;
 }
 
-.filtros-container {
+.filtros-wrapper {
   max-width: 900px;
   margin: 0 auto;
   display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.filtros-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filtros-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.filtros-container {
+  display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
-  justify-content: center;
 }
 
 .filtro-btn {
@@ -525,6 +645,34 @@ body {
   border-color: transparent;
   color: var(--blanco);
   box-shadow: 0 4px 16px rgba(0, 245, 212, 0.15);
+}
+
+/* Filtros de presupuesto */
+.filtro-precio-btn {
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid rgba(0, 245, 212, 0.2);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.filtro-precio-btn:hover {
+  border-color: var(--teal-mid);
+  color: var(--text-primary);
+  background: rgba(0, 245, 212, 0.07);
+}
+
+.filtro-precio-btn.active {
+  background: linear-gradient(135deg, rgba(0, 245, 212, 0.15), rgba(10, 154, 130, 0.25));
+  border-color: var(--teal-mid);
+  color: var(--teal-glow);
+  box-shadow: 0 2px 12px rgba(0, 245, 212, 0.12);
 }
 
 /* ========================================
@@ -598,8 +746,9 @@ body {
 /* Card tomada */
 .producto-card.tomada {
   cursor: default;
-  opacity: 0.55;
-  filter: grayscale(0.3);
+  opacity: 0.5;
+  filter: grayscale(100%);
+  pointer-events: none;
 }
 
 .producto-card.tomada:hover {

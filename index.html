@@ -67,7 +67,18 @@
         <p id="confirm-nombre-producto" class="confirm-product-name"></p>
         <p id="confirm-precio-producto" class="confirm-product-price"></p>
       </div>
-      <p class="confirm-hint">Una vez confirmado, el regalo quedará reservado para ti y los demás no podrán elegirlo.</p>
+      <div class="mensaje-grupo">
+        <label for="input-mensaje" class="mensaje-label">🕵️ Deja una pista o dedicatoria <span class="msg-opcional">(opcional)</span></label>
+        <textarea
+          id="input-mensaje"
+          class="input-mensaje"
+          placeholder="Ej: &quot;Con mucho cariño de quien más te quiere...&quot; 🌿"
+          maxlength="200"
+          rows="3"
+          aria-label="Mensaje o pista para el amigo secreto"
+        ></textarea>
+        <p class="mensaje-hint">El día del evento se leerán los mensajes y todos intentarán adivinar quién dio qué regalo 🎲</p>
+      </div>
       <div class="modal-actions">
         <button id="btn-cancelar-confirm" class="btn-secondary" onclick="cerrarConfirmar()">Cancelar</button>
         <button id="btn-confirmar" class="btn-primary" onclick="confirmarRegalo()">¡Sí, lo llevo! 🎉</button>
@@ -109,6 +120,16 @@
             <span class="stat-label">ya reservados</span>
           </div>
         </div>
+        <!-- BARRA DE PROGRESO -->
+        <div class="progreso-container" id="progreso-container">
+          <div class="progreso-label">
+            <span>🏡 Hogar completado</span>
+            <span id="progreso-pct">0%</span>
+          </div>
+          <div class="progreso-track">
+            <div class="progreso-bar" id="progreso-bar" style="width: 0%"></div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -124,22 +145,35 @@
 
     <!-- FILTROS -->
     <section class="filtros-section" aria-label="Filtrar productos">
-      <div class="filtros-container">
-        <button class="filtro-btn active" data-filtro="todos" onclick="filtrar(this, 'todos')" id="filtro-todos">
-          Todo 🌟
-        </button>
-        <button class="filtro-btn" data-filtro="cocina" onclick="filtrar(this, 'cocina')" id="filtro-cocina">
-          Cocina 🍳
-        </button>
-        <button class="filtro-btn" data-filtro="deco" onclick="filtrar(this, 'deco')" id="filtro-deco">
-          Decoración 🪴
-        </button>
-        <button class="filtro-btn" data-filtro="bano" onclick="filtrar(this, 'bano')" id="filtro-bano">
-          Baño 🚿
-        </button>
-        <button class="filtro-btn" data-filtro="hogar" onclick="filtrar(this, 'hogar')" id="filtro-hogar">
-          Hogar 🏠
-        </button>
+      <div class="filtros-wrapper">
+        <div class="filtros-grupo">
+          <span class="filtros-label">Categoría</span>
+          <div class="filtros-container">
+            <button class="filtro-btn active" data-filtro="todos" onclick="filtrar(this, 'todos')"
+              id="filtro-todos">Todo 🌟</button>
+            <button class="filtro-btn" data-filtro="cocina" onclick="filtrar(this, 'cocina')"
+              id="filtro-cocina">Cocina 🍳</button>
+            <button class="filtro-btn" data-filtro="deco" onclick="filtrar(this, 'deco')"
+              id="filtro-deco">Decoración 🪴</button>
+            <button class="filtro-btn" data-filtro="bano" onclick="filtrar(this, 'bano')"
+              id="filtro-bano">Baño 🚿</button>
+            <button class="filtro-btn" data-filtro="hogar" onclick="filtrar(this, 'hogar')"
+              id="filtro-hogar">Hogar 🏠</button>
+          </div>
+        </div>
+        <div class="filtros-grupo">
+          <span class="filtros-label">Presupuesto</span>
+          <div class="filtros-container">
+            <button class="filtro-precio-btn" data-precio="todos" onclick="filtrarPrecio(this, 'todos')"
+              id="filtro-precio-todos">Todos 💰</button>
+            <button class="filtro-precio-btn" data-precio="low" onclick="filtrarPrecio(this, 'low')"
+              id="filtro-precio-low">&lt; $50k</button>
+            <button class="filtro-precio-btn" data-precio="mid" onclick="filtrarPrecio(this, 'mid')"
+              id="filtro-precio-mid">$50k – $100k</button>
+            <button class="filtro-precio-btn" data-precio="high" onclick="filtrarPrecio(this, 'high')"
+              id="filtro-precio-high">&gt; $100k</button>
+          </div>
+        </div>
       </div>
     </section>
 

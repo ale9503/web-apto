@@ -39,8 +39,9 @@ const PRODUCTOS_DETALLE = {
 let nombreUsuario   = localStorage.getItem("apto_nombre") || "";
 let emailUsuario    = localStorage.getItem("apto_email") || "";
 let productoPendiente = null;
-let filtroActivo    = "todos";
-let productosCache  = [];       // últimos datos del Sheet
+let filtroActivo    = "todos";     // filtro categoría
+let filtroPrecioActivo = "todos";  // filtro presupuesto
+let productosCache  = [];          // últimos datos del Sheet
 let intervaloPolling = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -134,12 +135,24 @@ function cargarProductos() {
 function renderizarProductos() {
   const grid = document.getElementById("productos-grid");
 
-  const filtrados = filtroActivo === "todos"
+  // Filtro por categoría
+  let filtrados = filtroActivo === "todos"
     ? productosCache
     : productosCache.filter(p => {
         const det = PRODUCTOS_DETALLE[p.id];
         return det && det.categoria === filtroActivo;
       });
+
+  // Filtro por presupuesto
+  if (filtroPrecioActivo !== "todos") {
+    filtrados = filtrados.filter(p => {
+      const precio = (PRODUCTOS_DETALLE[p.id] || {}).precio || 0;
+      if (filtroPrecioActivo === "low")  return precio < 50000;
+      if (filtroPrecioActivo === "mid")  return precio >= 50000 && precio <= 100000;
+      if (filtroPrecioActivo === "high") return precio > 100000;
+      return true;
+    });
+  }
 
   if (filtrados.length === 0) {
     grid.innerHTML = `
@@ -175,7 +188,7 @@ function renderizarProductos() {
       ${det.url ? `<a href="${det.url}" target="_blank" rel="noopener noreferrer" class="card-link-tienda" onclick="event.stopPropagation()">Ver en tienda 🛒</a>` : ""}
       <p class="card-precio">${formatPrecio(det.precio || 0)}</p>
       ${tomado
-        ? `<p class="card-quien">🎁 ${escapeHtml(quien)} ya lo reservó</p>`
+        ? `<p class="card-quien">🔒 Ya reservado</p>`
         : `<button
              class="card-btn"
              id="btn-producto-${producto.id}"
@@ -202,6 +215,13 @@ function filtrar(btn, categoria) {
   document.querySelectorAll(".filtro-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   filtroActivo = categoria;
+  renderizarProductos();
+}
+
+function filtrarPrecio(btn, rango) {
+  document.querySelectorAll(".filtro-precio-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  filtroPrecioActivo = rango;
   renderizarProductos();
 }
 
@@ -232,6 +252,7 @@ function abrirConfirmar(id) {
 
 function cerrarConfirmar() {
   document.getElementById("modal-confirmar").classList.add("hidden");
+  document.getElementById("input-mensaje").value = "";
   productoSeleccionado = null;
 }
 
@@ -249,7 +270,8 @@ function confirmarRegalo() {
   btn.disabled    = true;
   btn.textContent = "Guardando...";
 
-  const url = `${SCRIPT_URL}?accion=reservar&id=${encodeURIComponent(productoSeleccionado)}&quien=${encodeURIComponent(nombreUsuario)}&email=${encodeURIComponent(emailUsuario)}`;
+  const mensaje = document.getElementById("input-mensaje").value.trim();
+  const url = `${SCRIPT_URL}?accion=reservar&id=${encodeURIComponent(productoSeleccionado)}&quien=${encodeURIComponent(nombreUsuario)}&email=${encodeURIComponent(emailUsuario)}&mensaje=${encodeURIComponent(mensaje)}`;
 
   fetch(url)
     .then(r => r.json())
@@ -391,9 +413,15 @@ function actualizarStats() {
   productosCache.forEach(p => {
     if (p.tomado === true || String(p.tomado).toUpperCase() === "TRUE") tomados++;
   });
-  const disponibles = productosCache.length - tomados;
+  const total = productosCache.length;
+  const disponibles = total - tomados;
   document.getElementById("stat-disponibles").textContent = disponibles;
   document.getElementById("stat-tomados").textContent     = tomados;
+
+  // Barra de progreso
+  const pct = total > 0 ? Math.round((tomados / total) * 100) : 0;
+  document.getElementById("progreso-bar").style.width = pct + "%";
+  document.getElementById("progreso-pct").textContent = pct + "%";
 }
 
 // ─────────────────────────────────────────
