@@ -112,8 +112,8 @@ document.getElementById("input-email").addEventListener("keydown", (e) => {
 // 5. LEER DATOS DEL SHEET
 // ─────────────────────────────────────────
 function cargarProductos() {
-  const url = `${SCRIPT_URL}?accion=leer&email=${encodeURIComponent(emailUsuario)}`;
-  fetch(url)
+  const url = `${SCRIPT_URL}?accion=leer&email=${encodeURIComponent(emailUsuario)}&_t=${Date.now()}`;
+  fetch(url, { cache: "no-store" })
     .then(r => r.json())
     .then(data => {
       if (data.productos) {
@@ -380,20 +380,33 @@ function cancelarRegalo(id) {
   const btn = document.getElementById(`btn-cancelar-${id}`);
   if (btn) { btn.disabled = true; btn.textContent = "⏳"; }
 
-  const url = `${SCRIPT_URL}?accion=cancelar&id=${encodeURIComponent(id)}&email=${encodeURIComponent(emailUsuario)}`;
+  const url = `${SCRIPT_URL}?accion=cancelar&id=${encodeURIComponent(id)}&email=${encodeURIComponent(emailUsuario)}&_t=${Date.now()}`;
 
-  fetch(url)
+  fetch(url, { cache: "no-store" })
     .then(r => r.json())
     .then(data => {
       if (data.exito) {
-        mostrarToast("Regalo liberado correctamente.");
-        cargarProductos();
+        // Actualizar cache local de inmediato (optimistic update)
+        productosCache = productosCache.map(p => {
+          if (p.id === id) {
+            return { ...p, tomado: false, quien: "", esMio: false };
+          }
+          return p;
+        });
+        renderizarProductos();
+        actualizarStats();
+        renderizarRanking();
+        actualizarMisRegalos();
+        mostrarToast("Regalo liberado correctamente. 🌿");
+        // Re-fetch para confirmar con el Sheet real (sin bloquear UI)
+        setTimeout(cargarProductos, 1500);
       } else {
         mostrarToast(`⚠️ ${data.error || "No se pudo cancelar."}`);
+        if (btn) { btn.disabled = false; btn.textContent = "Quitar"; }
       }
     })
-    .catch(() => mostrarToast("⚠️ Error de conexión."))
-    .finally(() => {
+    .catch(() => {
+      mostrarToast("⚠️ Error de conexión.");
       if (btn) { btn.disabled = false; btn.textContent = "Quitar"; }
     });
 }
