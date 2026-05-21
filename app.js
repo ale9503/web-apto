@@ -66,6 +66,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("admin-regalo-error").textContent = "";
   });
   document.getElementById("admin-regalo-nombre").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("admin-regalo-url").focus();
+    document.getElementById("admin-regalo-error").textContent = "";
+  });
+  document.getElementById("admin-regalo-url").addEventListener("keydown", (e) => {
     if (e.key === "Enter") guardarRegaloAdmin();
     document.getElementById("admin-regalo-error").textContent = "";
   });
@@ -206,7 +210,7 @@ function renderizarProductos() {
       <div class="card-categoria">${categoriaLabel(det.categoria)}</div>
       <h3 class="card-nombre">${escapeHtml(producto.nombre)}</h3>
       <p class="card-descripcion">${det.descripcion || ""}</p>
-      ${det.url ? `<a href="${det.url}" target="_blank" rel="noopener noreferrer" class="card-link-tienda" onclick="event.stopPropagation()">Ver en tienda 🛒</a>` : ""}
+      ${det.url || producto.url ? `<a href="${det.url || producto.url}" target="_blank" rel="noopener noreferrer" class="card-link-tienda" onclick="event.stopPropagation()">Ver en tienda 🛒</a>` : ""}
       <p class="card-precio">${formatPrecio(det.precio || 0)}</p>
       ${tomado
         ? `<p class="card-quien">🔒 Ya reservado</p>`
@@ -646,6 +650,7 @@ function abrirModalAgregarRegalo() {
   document.getElementById("admin-regalo-id").value           = "";
   document.getElementById("admin-regalo-id").disabled        = false;
   document.getElementById("admin-regalo-nombre").value       = "";
+  document.getElementById("admin-regalo-url").value          = "";
   document.getElementById("admin-regalo-error").textContent  = "";
   document.getElementById("modal-admin-regalo").classList.remove("hidden");
   setTimeout(() => document.getElementById("admin-regalo-id").focus(), 100);
@@ -675,6 +680,7 @@ function cerrarModalRegaloAdmin() {
 function guardarRegaloAdmin() {
   const id     = document.getElementById("admin-regalo-id").value.trim();
   const nombre = document.getElementById("admin-regalo-nombre").value.trim();
+  const url    = document.getElementById("admin-regalo-url").value.trim();
   const errEl  = document.getElementById("admin-regalo-error");
   const btn    = document.getElementById("btn-guardar-regalo");
 
@@ -692,9 +698,9 @@ function guardarRegaloAdmin() {
 
   const esEdicion = modoEdicionAdmin !== null;
   const accion    = esEdicion ? "editarRegalo" : "agregarRegalo";
-  const url = `${SCRIPT_URL}?accion=${accion}&adminToken=${encodeURIComponent(adminToken)}&id=${encodeURIComponent(id)}&nombre=${encodeURIComponent(nombre)}`;
+  const url2 = `${SCRIPT_URL}?accion=${accion}&adminToken=${encodeURIComponent(adminToken)}&id=${encodeURIComponent(id)}&nombre=${encodeURIComponent(nombre)}&url=${encodeURIComponent(url)}`;
 
-  fetch(url, { cache: "no-store" })
+  fetch(url2, { cache: "no-store" })
     .then(r => r.json())
     .then(data => {
       if (data.exito) {

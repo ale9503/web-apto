@@ -53,11 +53,11 @@ function doGet(e) {
   }
 
   if (accion === "agregarRegalo") {
-    return agregarRegalo(e.parameter.adminToken, e.parameter.id, e.parameter.nombre);
+    return agregarRegalo(e.parameter.adminToken, e.parameter.id, e.parameter.nombre, e.parameter.url || "");
   }
 
   if (accion === "editarRegalo") {
-    return editarRegalo(e.parameter.adminToken, e.parameter.id, e.parameter.nombre);
+    return editarRegalo(e.parameter.adminToken, e.parameter.id, e.parameter.nombre, e.parameter.url || "");
   }
 
   if (accion === "eliminarRegalo") {
@@ -247,7 +247,7 @@ function validarToken(adminToken) {
 // ================================================
 //  AGREGAR REGALO — añade nueva fila al Sheet
 // ================================================
-function agregarRegalo(adminToken, id, nombre) {
+function agregarRegalo(adminToken, id, nombre, url) {
   if (!validarToken(adminToken)) {
     return respuesta({ exito: false, error: "No autorizado" });
   }
@@ -256,6 +256,8 @@ function agregarRegalo(adminToken, id, nombre) {
   }
 
   const hoja = obtenerHoja();
+  asegurarColumnaUrl(hoja);
+
   const datos = hoja.getDataRange().getValues();
   const enc   = datos[0];
 
@@ -272,6 +274,7 @@ function agregarRegalo(adminToken, id, nombre) {
     if (col === "id")      return id.trim();
     if (col === "nombre")  return nombre.trim();
     if (col === "tomado")  return false;
+    if (col === "url")     return (url || "").trim();
     return "";
   });
 
@@ -281,9 +284,9 @@ function agregarRegalo(adminToken, id, nombre) {
 }
 
 // ================================================
-//  EDITAR REGALO — actualiza nombre por ID
+//  EDITAR REGALO — actualiza nombre y url por ID
 // ================================================
-function editarRegalo(adminToken, id, nombre) {
+function editarRegalo(adminToken, id, nombre, url) {
   if (!validarToken(adminToken)) {
     return respuesta({ exito: false, error: "No autorizado" });
   }
@@ -292,11 +295,14 @@ function editarRegalo(adminToken, id, nombre) {
   }
 
   const hoja = obtenerHoja();
+  asegurarColumnaUrl(hoja);
+
   const datos = hoja.getDataRange().getValues();
   const enc   = datos[0];
 
   var colId     = enc.indexOf("id");
   var colNombre = enc.indexOf("nombre");
+  var colUrl    = enc.indexOf("url");
 
   if (colId === -1 || colNombre === -1) {
     return respuesta({ exito: false, error: "Estructura de hoja inválida" });
@@ -305,12 +311,30 @@ function editarRegalo(adminToken, id, nombre) {
   for (var i = 1; i < datos.length; i++) {
     if (String(datos[i][colId]).trim() === String(id).trim()) {
       hoja.getRange(i + 1, colNombre + 1).setValue(nombre.trim());
+      if (colUrl !== -1) {
+        hoja.getRange(i + 1, colUrl + 1).setValue((url || "").trim());
+      }
       SpreadsheetApp.flush();
       return respuesta({ exito: true });
     }
   }
 
   return respuesta({ exito: false, error: "Regalo no encontrado" });
+}
+
+// ================================================
+//  ASEGURAR COLUMNA URL — la crea si no existe
+// ================================================
+function asegurarColumnaUrl(hoja) {
+  var enc = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
+  if (enc.indexOf("url") === -1) {
+    var colNueva = hoja.getLastColumn() + 1;
+    hoja.getRange(1, colNueva).setValue("url");
+    hoja.getRange(1, colNueva)
+      .setFontWeight("bold")
+      .setBackground("#1a4031")
+      .setFontColor("#ffffff");
+  }
 }
 
 // ================================================

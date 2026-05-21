@@ -1294,7 +1294,8 @@ body {
 #admin-input-user,
 #admin-input-password,
 #admin-regalo-id,
-#admin-regalo-nombre {
+#admin-regalo-nombre,
+#admin-regalo-url {
   width: 100%;
   padding: 0.9rem 1.2rem;
   border-radius: var(--radius-sm);
@@ -1314,7 +1315,8 @@ body {
 #admin-input-user::placeholder,
 #admin-input-password::placeholder,
 #admin-regalo-id::placeholder,
-#admin-regalo-nombre::placeholder {
+#admin-regalo-nombre::placeholder,
+#admin-regalo-url::placeholder {
   color: var(--text-muted);
   font-weight: 300;
 }
@@ -1322,7 +1324,8 @@ body {
 #admin-input-user:focus,
 #admin-input-password:focus,
 #admin-regalo-id:focus,
-#admin-regalo-nombre:focus {
+#admin-regalo-nombre:focus,
+#admin-regalo-url:focus {
   border-color: #e74c3c;
   box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.18);
 }
