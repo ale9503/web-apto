@@ -95,9 +95,14 @@
         <span class="user-avatar">👤</span>
         <span id="top-bar-nombre">Invitado</span>
       </div>
-      <button class="btn-mis-regalos" onclick="abrirMisRegalos()">
-        🎁 Mis Regalos <span id="badge-mis-regalos" class="badge">0</span>
-      </button>
+      <div class="top-bar-actions">
+        <button class="btn-mis-regalos" onclick="abrirMisRegalos()">
+          🎁 Mis Regalos <span id="badge-mis-regalos" class="badge">0</span>
+        </button>
+        <button class="btn-salir" onclick="cerrarSesion()" id="btn-salir" aria-label="Cerrar sesión" title="Cambiar usuario">
+          Salir
+        </button>
+      </div>
     </div>
 
     <!-- HEADER -->

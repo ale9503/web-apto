@@ -261,6 +261,37 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ─────────────────────────────────────────
+// CERRAR SESIÓN
+// ─────────────────────────────────────────
+function cerrarSesion() {
+  // Limpiar localStorage
+  localStorage.removeItem("apto_nombre");
+  localStorage.removeItem("apto_email");
+
+  // Resetear estado global
+  nombreUsuario = "";
+  emailUsuario  = "";
+  productoPendiente = null;
+
+  // Limpiar UI de la top bar
+  document.getElementById("top-bar-nombre").textContent = "Invitado";
+  document.getElementById("footer-usuario").textContent = "";
+  document.getElementById("badge-mis-regalos").textContent = "0";
+
+  // Limpiar inputs del modal auth por si quedaron datos
+  document.getElementById("input-nombre").value = "";
+  document.getElementById("input-email").value = "";
+  document.getElementById("error-nombre").textContent = "";
+
+  // Cerrar cualquier modal abierto
+  cerrarConfirmar();
+  cerrarMisRegalos();
+
+  // Mostrar modal de auth
+  document.getElementById("modal-auth").classList.remove("hidden");
+}
+
+// ─────────────────────────────────────────
 // 9. CONFIRMAR REGALO → escribir al Sheet
 // ─────────────────────────────────────────
 function confirmarRegalo() {
