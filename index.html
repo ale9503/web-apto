@@ -198,6 +198,7 @@
     <!-- FOOTER -->
     <footer class="site-footer">
       <p>Hecho con 💚 para celebrar este nuevo comienzo · <span id="footer-usuario"></span></p>
+      <button class="btn-admin-trigger" id="btn-admin-trigger" onclick="abrirLoginAdmin()" aria-label="Acceso administrador" title="Administrador">⚙️</button>
     </footer>
 
   </main>
@@ -221,6 +222,88 @@
   </div>
 
 
+
+  <!-- ======= MODAL: LOGIN ADMIN ======= -->
+  <div id="modal-admin-login" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="admin-login-titulo">
+    <div class="modal-box" id="modal-box-admin-login">
+      <div class="modal-icon">🔐</div>
+      <h2 id="admin-login-titulo">Acceso Administrador</h2>
+      <p class="modal-desc">Ingresa tus credenciales para gestionar la lista de regalos.</p>
+      <div class="input-group">
+        <input
+          type="text"
+          id="admin-input-user"
+          placeholder="Usuario"
+          autocomplete="off"
+          aria-label="Usuario administrador"
+        />
+        <input
+          type="password"
+          id="admin-input-password"
+          placeholder="Contraseña"
+          autocomplete="off"
+          aria-label="Contraseña administrador"
+        />
+      </div>
+      <p id="admin-error" class="error-msg" aria-live="polite"></p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="cerrarLoginAdmin()">Cancelar</button>
+        <button id="btn-admin-login" class="btn-primary btn-admin" onclick="loginAdmin()">Entrar 🔐</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= PANEL ADMIN ======= -->
+  <div id="panel-admin" class="admin-panel hidden" role="dialog" aria-modal="true" aria-labelledby="admin-panel-titulo">
+    <div class="admin-panel-inner">
+      <div class="admin-panel-header">
+        <div>
+          <h2 id="admin-panel-titulo">⚙️ Panel Admin</h2>
+          <p class="admin-subtitle">Gestión de regalos</p>
+        </div>
+        <div class="admin-header-actions">
+          <button class="btn-admin-agregar" id="btn-admin-agregar" onclick="abrirModalAgregarRegalo()">➕ Agregar regalo</button>
+          <button class="btn-secondary btn-sm" onclick="cerrarSesionAdmin()">Cerrar sesión</button>
+          <button class="btn-close" onclick="cerrarPanelAdmin()" aria-label="Cerrar panel">×</button>
+        </div>
+      </div>
+      <div class="admin-lista" id="admin-lista">
+        <!-- Llenado por JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= MODAL: AGREGAR / EDITAR REGALO (ADMIN) ======= -->
+  <div id="modal-admin-regalo" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="admin-regalo-titulo">
+    <div class="modal-box" id="modal-box-admin-regalo">
+      <div class="modal-icon" id="admin-regalo-icon">🎁</div>
+      <h2 id="admin-regalo-titulo">Agregar Regalo</h2>
+      <p class="modal-desc">Completa los datos del nuevo regalo. El ID debe coincidir con el que tengas en <code>app.js</code> para ver los detalles visuales.</p>
+      <div class="input-group">
+        <input
+          type="text"
+          id="admin-regalo-id"
+          placeholder="ID del regalo (ej: p19)"
+          autocomplete="off"
+          aria-label="ID del regalo"
+          maxlength="10"
+        />
+        <input
+          type="text"
+          id="admin-regalo-nombre"
+          placeholder="Nombre del regalo"
+          autocomplete="off"
+          aria-label="Nombre del regalo"
+          maxlength="80"
+        />
+      </div>
+      <p id="admin-regalo-error" class="error-msg" aria-live="polite"></p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="cerrarModalRegaloAdmin()">Cancelar</button>
+        <button id="btn-guardar-regalo" class="btn-primary btn-admin" onclick="guardarRegaloAdmin()">Guardar 💾</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

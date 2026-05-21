@@ -4,9 +4,10 @@
 //  y sigue los pasos del README
 // ================================================
 
-const HOJA = "Regalos";
+const HOJA    = "Regalos";
+const SECRETS = "secrets";
 
-// ---- Lista de productos ----
+// ---- Lista de productos (solo para inicialización) ----
 const PRODUCTOS = [
   { id: "p01", nombre: "Sartén antiadherente 28cm" },
   { id: "p02", nombre: "Jarra de agua de vidrio 1.5L" },
@@ -46,6 +47,23 @@ function doGet(e) {
     return cancelarProducto(e.parameter.id, e.parameter.email);
   }
 
+  // ---- Acciones de Admin ----
+  if (accion === "loginAdmin") {
+    return loginAdmin(e.parameter.user, e.parameter.password);
+  }
+
+  if (accion === "agregarRegalo") {
+    return agregarRegalo(e.parameter.adminToken, e.parameter.id, e.parameter.nombre);
+  }
+
+  if (accion === "editarRegalo") {
+    return editarRegalo(e.parameter.adminToken, e.parameter.id, e.parameter.nombre);
+  }
+
+  if (accion === "eliminarRegalo") {
+    return eliminarRegalo(e.parameter.adminToken, e.parameter.id);
+  }
+
   return respuesta({ error: "Acción no válida" });
 }
 
@@ -60,9 +78,9 @@ function leerProductos(emailSolicitante) {
 
   const productos = filas.map(function(fila) {
     const obj = {};
-    encabezados.forEach(function(enc, i) { 
+    encabezados.forEach(function(enc, i) {
       if (enc !== "email") {
-        obj[enc] = fila[i]; 
+        obj[enc] = fila[i];
       } else {
         obj.esMio = (emailSolicitante && String(fila[i]).toLowerCase() === String(emailSolicitante).toLowerCase());
       }
@@ -85,7 +103,6 @@ function reservarProducto(id, quien, email, mensaje) {
   const datos = hoja.getDataRange().getValues();
   const enc   = datos[0];
 
-  // Encontrar columnas por nombre (robusto ante cualquier orden)
   var colId      = enc.indexOf("id");
   var colTomado  = enc.indexOf("tomado");
   var colQuien   = enc.indexOf("quien");
@@ -99,12 +116,10 @@ function reservarProducto(id, quien, email, mensaje) {
   for (var i = 1; i < datos.length; i++) {
     if (String(datos[i][colId]).trim() === String(id).trim()) {
 
-      // Ya está reservado
       if (datos[i][colTomado] === true || String(datos[i][colTomado]).toUpperCase() === "TRUE") {
         return respuesta({ exito: false, error: "Ya reservado" });
       }
 
-      // Marcar como reservado
       hoja.getRange(i + 1, colTomado  + 1).setValue(true);
       hoja.getRange(i + 1, colQuien   + 1).setValue(quien);
       hoja.getRange(i + 1, colEmail   + 1).setValue(email);
@@ -131,7 +146,6 @@ function cancelarProducto(id, email) {
   const datos = hoja.getDataRange().getValues();
   const enc   = datos[0];
 
-  // Encontrar columnas por nombre
   var colId      = enc.indexOf("id");
   var colTomado  = enc.indexOf("tomado");
   var colQuien   = enc.indexOf("quien");
@@ -150,7 +164,6 @@ function cancelarProducto(id, email) {
         return respuesta({ exito: false, error: "No tienes permiso para cancelar este regalo." });
       }
 
-      // Liberar
       hoja.getRange(i + 1, colTomado + 1).setValue(false);
       hoja.getRange(i + 1, colQuien  + 1).setValue("");
       hoja.getRange(i + 1, colEmail  + 1).setValue("");
@@ -163,6 +176,172 @@ function cancelarProducto(id, email) {
   }
 
   return respuesta({ exito: false, error: "Producto no encontrado. ID buscado: " + id });
+}
+
+// ================================================
+//  LOGIN ADMIN — valida contra hoja "secrets"
+// ================================================
+function loginAdmin(user, password) {
+  if (!user || !password) {
+    return respuesta({ exito: false, error: "Faltan credenciales" });
+  }
+
+  const ss        = SpreadsheetApp.getActiveSpreadsheet();
+  const hojaSecrets = ss.getSheetByName(SECRETS);
+
+  if (!hojaSecrets) {
+    return respuesta({ exito: false, error: "Hoja 'secrets' no encontrada" });
+  }
+
+  const datos = hojaSecrets.getDataRange().getValues();
+  // Fila 0 = encabezados [user, password], fila 1 en adelante = credenciales
+  for (var i = 1; i < datos.length; i++) {
+    const userGuardado  = String(datos[i][0] || "").trim();
+    const passGuardada  = String(datos[i][1] || "").trim();
+
+    if (userGuardado === user.trim() && passGuardada === password.trim()) {
+      // Generar token simple: hash de user+pass+fecha
+      const token = Utilities.base64Encode(user + ":" + password + ":" + new Date().toDateString());
+      return respuesta({ exito: true, adminToken: token });
+    }
+  }
+
+  return respuesta({ exito: false, error: "Credenciales incorrectas" });
+}
+
+// ================================================
+//  VALIDAR TOKEN — verifica que el token sea válido
+// ================================================
+function validarToken(adminToken) {
+  if (!adminToken) return false;
+  try {
+    const decoded = Utilities.base64Decode(adminToken);
+    const str     = Utilities.newBlob(decoded).getDataAsString();
+    const parts   = str.split(":");
+    if (parts.length < 3) return false;
+
+    const user     = parts[0];
+    const password = parts[1];
+    const fecha    = parts.slice(2).join(":");
+
+    // El token debe ser de hoy
+    if (fecha !== new Date().toDateString()) return false;
+
+    // Verificar credenciales nuevamente
+    const ss          = SpreadsheetApp.getActiveSpreadsheet();
+    const hojaSecrets = ss.getSheetByName(SECRETS);
+    if (!hojaSecrets) return false;
+
+    const datos = hojaSecrets.getDataRange().getValues();
+    for (var i = 1; i < datos.length; i++) {
+      if (String(datos[i][0]).trim() === user && String(datos[i][1]).trim() === password) {
+        return true;
+      }
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+// ================================================
+//  AGREGAR REGALO — añade nueva fila al Sheet
+// ================================================
+function agregarRegalo(adminToken, id, nombre) {
+  if (!validarToken(adminToken)) {
+    return respuesta({ exito: false, error: "No autorizado" });
+  }
+  if (!id || !nombre) {
+    return respuesta({ exito: false, error: "Faltan datos: id y nombre son obligatorios" });
+  }
+
+  const hoja = obtenerHoja();
+  const datos = hoja.getDataRange().getValues();
+  const enc   = datos[0];
+
+  // Verificar que el ID no exista ya
+  const colId = enc.indexOf("id");
+  for (var i = 1; i < datos.length; i++) {
+    if (String(datos[i][colId]).trim() === String(id).trim()) {
+      return respuesta({ exito: false, error: "Ya existe un regalo con ese ID" });
+    }
+  }
+
+  // Agregar fila con el orden de columnas actual
+  const nuevaFila = enc.map(function(col) {
+    if (col === "id")      return id.trim();
+    if (col === "nombre")  return nombre.trim();
+    if (col === "tomado")  return false;
+    return "";
+  });
+
+  hoja.appendRow(nuevaFila);
+  SpreadsheetApp.flush();
+  return respuesta({ exito: true });
+}
+
+// ================================================
+//  EDITAR REGALO — actualiza nombre por ID
+// ================================================
+function editarRegalo(adminToken, id, nombre) {
+  if (!validarToken(adminToken)) {
+    return respuesta({ exito: false, error: "No autorizado" });
+  }
+  if (!id || !nombre) {
+    return respuesta({ exito: false, error: "Faltan datos: id y nombre son obligatorios" });
+  }
+
+  const hoja = obtenerHoja();
+  const datos = hoja.getDataRange().getValues();
+  const enc   = datos[0];
+
+  var colId     = enc.indexOf("id");
+  var colNombre = enc.indexOf("nombre");
+
+  if (colId === -1 || colNombre === -1) {
+    return respuesta({ exito: false, error: "Estructura de hoja inválida" });
+  }
+
+  for (var i = 1; i < datos.length; i++) {
+    if (String(datos[i][colId]).trim() === String(id).trim()) {
+      hoja.getRange(i + 1, colNombre + 1).setValue(nombre.trim());
+      SpreadsheetApp.flush();
+      return respuesta({ exito: true });
+    }
+  }
+
+  return respuesta({ exito: false, error: "Regalo no encontrado" });
+}
+
+// ================================================
+//  ELIMINAR REGALO — borra fila por ID
+// ================================================
+function eliminarRegalo(adminToken, id) {
+  if (!validarToken(adminToken)) {
+    return respuesta({ exito: false, error: "No autorizado" });
+  }
+  if (!id) {
+    return respuesta({ exito: false, error: "Falta el ID del regalo" });
+  }
+
+  const hoja = obtenerHoja();
+  const datos = hoja.getDataRange().getValues();
+  const enc   = datos[0];
+  var colId   = enc.indexOf("id");
+
+  if (colId === -1) {
+    return respuesta({ exito: false, error: "Estructura de hoja inválida" });
+  }
+
+  for (var i = 1; i < datos.length; i++) {
+    if (String(datos[i][colId]).trim() === String(id).trim()) {
+      hoja.deleteRow(i + 1);
+      SpreadsheetApp.flush();
+      return respuesta({ exito: true });
+    }
+  }
+
+  return respuesta({ exito: false, error: "Regalo no encontrado" });
 }
 
 // ================================================
@@ -179,16 +358,13 @@ function obtenerHoja() {
 }
 
 function inicializarHoja(hoja) {
-  if (hoja.getLastRow() > 0) return; // ya tiene datos
+  if (hoja.getLastRow() > 0) return;
 
-  // Encabezados
   hoja.getRange(1, 1, 1, 6).setValues([["id", "nombre", "tomado", "quien", "email", "mensaje"]]);
 
-  // Productos
   var filas = PRODUCTOS.map(function(p) { return [p.id, p.nombre, false, "", "", ""]; });
   hoja.getRange(2, 1, filas.length, 6).setValues(filas);
 
-  // Estilo encabezado
   hoja.getRange(1, 1, 1, 6)
     .setFontWeight("bold")
     .setBackground("#1a4031")

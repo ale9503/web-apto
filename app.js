@@ -43,12 +43,33 @@ let filtroActivo    = "todos";     // filtro categoría
 let filtroPrecioActivo = "todos";  // filtro presupuesto
 let productosCache  = [];          // últimos datos del Sheet
 let intervaloPolling = null;
+let adminToken      = sessionStorage.getItem("apto_admin_token") || "";  // sesión admin
+let modoEdicionAdmin = null;  // null = agregar, string = id del regalo a editar
 
 document.addEventListener("DOMContentLoaded", () => {
   if (nombreUsuario && emailUsuario) {
     document.getElementById("top-bar-nombre").textContent = nombreUsuario;
     document.getElementById("footer-usuario").textContent = `Conectad@ como ${nombreUsuario}`;
   }
+
+  // Keyboard shortcuts para admin
+  document.getElementById("admin-input-user").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("admin-input-password").focus();
+    document.getElementById("admin-error").textContent = "";
+  });
+  document.getElementById("admin-input-password").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loginAdmin();
+    document.getElementById("admin-error").textContent = "";
+  });
+  document.getElementById("admin-regalo-id").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("admin-regalo-nombre").focus();
+    document.getElementById("admin-regalo-error").textContent = "";
+  });
+  document.getElementById("admin-regalo-nombre").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") guardarRegaloAdmin();
+    document.getElementById("admin-regalo-error").textContent = "";
+  });
+
   cargarProductos();
   intervaloPolling = setInterval(cargarProductos, 10000);
 });
@@ -257,7 +278,12 @@ function cerrarConfirmar() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") cerrarConfirmar();
+  if (e.key === "Escape") {
+    cerrarConfirmar();
+    cerrarLoginAdmin();
+    cerrarModalRegaloAdmin();
+    cerrarPanelAdmin();
+  }
 });
 
 // ─────────────────────────────────────────
@@ -498,4 +524,239 @@ function escapeHtml(str) {
   const d = document.createElement("div");
   d.appendChild(document.createTextNode(str || ""));
   return d.innerHTML;
+}
+
+// ─────────────────────────────────────────
+// 13. ADMIN — LOGIN
+// ─────────────────────────────────────────
+function abrirLoginAdmin() {
+  // Si ya hay sesión admin activa, abrir el panel directamente
+  if (adminToken) {
+    abrirPanelAdmin();
+    return;
+  }
+  document.getElementById("admin-input-user").value = "";
+  document.getElementById("admin-input-password").value = "";
+  document.getElementById("admin-error").textContent = "";
+  document.getElementById("modal-admin-login").classList.remove("hidden");
+  setTimeout(() => document.getElementById("admin-input-user").focus(), 100);
+}
+
+function cerrarLoginAdmin() {
+  document.getElementById("modal-admin-login").classList.add("hidden");
+}
+
+function loginAdmin() {
+  const user     = document.getElementById("admin-input-user").value.trim();
+  const password = document.getElementById("admin-input-password").value.trim();
+  const errEl    = document.getElementById("admin-error");
+  const btn      = document.getElementById("btn-admin-login");
+
+  if (!user || !password) {
+    errEl.textContent = "Por favor ingresa usuario y contraseña.";
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Verificando...";
+
+  const url = `${SCRIPT_URL}?accion=loginAdmin&user=${encodeURIComponent(user)}&password=${encodeURIComponent(password)}`;
+
+  fetch(url, { cache: "no-store" })
+    .then(r => r.json())
+    .then(data => {
+      if (data.exito && data.adminToken) {
+        adminToken = data.adminToken;
+        sessionStorage.setItem("apto_admin_token", adminToken);
+        cerrarLoginAdmin();
+        abrirPanelAdmin();
+        mostrarToast("✅ Sesión admin iniciada.");
+      } else {
+        errEl.textContent = data.error || "Credenciales incorrectas.";
+      }
+    })
+    .catch(() => {
+      errEl.textContent = "Error de conexión. Intenta de nuevo.";
+    })
+    .finally(() => {
+      btn.disabled    = false;
+      btn.textContent = "Entrar 🔐";
+    });
+}
+
+function cerrarSesionAdmin() {
+  if (!confirm("¿Cerrar sesión de administrador?")) return;
+  adminToken = "";
+  sessionStorage.removeItem("apto_admin_token");
+  cerrarPanelAdmin();
+  mostrarToast("Sesión admin cerrada.");
+}
+
+// ─────────────────────────────────────────
+// 14. ADMIN — PANEL Y LISTA
+// ─────────────────────────────────────────
+function abrirPanelAdmin() {
+  document.getElementById("panel-admin").classList.remove("hidden");
+  renderizarListaAdmin();
+}
+
+function cerrarPanelAdmin() {
+  document.getElementById("panel-admin").classList.add("hidden");
+}
+
+function renderizarListaAdmin() {
+  const lista = document.getElementById("admin-lista");
+
+  if (productosCache.length === 0) {
+    lista.innerHTML = `<p class="confirm-hint" style="text-align:center;padding:2rem;">No hay regalos cargados aún.</p>`;
+    return;
+  }
+
+  lista.innerHTML = "";
+  productosCache.forEach(p => {
+    const det    = PRODUCTOS_DETALLE[p.id] || {};
+    const tomado = p.tomado === true || String(p.tomado).toUpperCase() === "TRUE";
+    const item   = document.createElement("div");
+    item.className = "admin-item";
+    item.innerHTML = `
+      <div class="admin-item-info">
+        <span class="admin-item-emoji">${det.emoji || "🎁"}</span>
+        <div class="admin-item-text">
+          <span class="admin-item-id">${escapeHtml(p.id)}</span>
+          <strong>${escapeHtml(p.nombre)}</strong>
+          ${tomado ? `<span class="admin-badge-tomado">✅ Reservado por ${escapeHtml(p.quien || "")}</span>` : `<span class="admin-badge-libre">✨ Disponible</span>`}
+        </div>
+      </div>
+      <div class="admin-item-actions">
+        <button class="btn-admin-edit" onclick="abrirModalEditarRegalo('${p.id}')" title="Editar nombre">✏️</button>
+        <button class="btn-admin-del" onclick="eliminarRegaloAdmin('${p.id}')" title="Eliminar regalo">🗑️</button>
+      </div>
+    `;
+    lista.appendChild(item);
+  });
+}
+
+// ─────────────────────────────────────────
+// 15. ADMIN — MODAL AGREGAR / EDITAR
+// ─────────────────────────────────────────
+function abrirModalAgregarRegalo() {
+  modoEdicionAdmin = null;
+  document.getElementById("admin-regalo-titulo").textContent = "Agregar Regalo";
+  document.getElementById("admin-regalo-icon").textContent   = "🎁";
+  document.getElementById("admin-regalo-id").value           = "";
+  document.getElementById("admin-regalo-id").disabled        = false;
+  document.getElementById("admin-regalo-nombre").value       = "";
+  document.getElementById("admin-regalo-error").textContent  = "";
+  document.getElementById("modal-admin-regalo").classList.remove("hidden");
+  setTimeout(() => document.getElementById("admin-regalo-id").focus(), 100);
+}
+
+function abrirModalEditarRegalo(id) {
+  const producto = productosCache.find(p => p.id === id);
+  if (!producto) return;
+
+  const det = PRODUCTOS_DETALLE[id] || {};
+  modoEdicionAdmin = id;
+  document.getElementById("admin-regalo-titulo").textContent = "Editar Regalo";
+  document.getElementById("admin-regalo-icon").textContent   = det.emoji || "✏️";
+  document.getElementById("admin-regalo-id").value           = id;
+  document.getElementById("admin-regalo-id").disabled        = true;  // no permitir cambiar el ID
+  document.getElementById("admin-regalo-nombre").value       = producto.nombre;
+  document.getElementById("admin-regalo-error").textContent  = "";
+  document.getElementById("modal-admin-regalo").classList.remove("hidden");
+  setTimeout(() => document.getElementById("admin-regalo-nombre").focus(), 100);
+}
+
+function cerrarModalRegaloAdmin() {
+  document.getElementById("modal-admin-regalo").classList.add("hidden");
+  modoEdicionAdmin = null;
+}
+
+function guardarRegaloAdmin() {
+  const id     = document.getElementById("admin-regalo-id").value.trim();
+  const nombre = document.getElementById("admin-regalo-nombre").value.trim();
+  const errEl  = document.getElementById("admin-regalo-error");
+  const btn    = document.getElementById("btn-guardar-regalo");
+
+  if (!id || id.length < 2) {
+    errEl.textContent = "El ID debe tener al menos 2 caracteres.";
+    return;
+  }
+  if (!nombre || nombre.length < 3) {
+    errEl.textContent = "El nombre debe tener al menos 3 caracteres.";
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Guardando...";
+
+  const esEdicion = modoEdicionAdmin !== null;
+  const accion    = esEdicion ? "editarRegalo" : "agregarRegalo";
+  const url = `${SCRIPT_URL}?accion=${accion}&adminToken=${encodeURIComponent(adminToken)}&id=${encodeURIComponent(id)}&nombre=${encodeURIComponent(nombre)}`;
+
+  fetch(url, { cache: "no-store" })
+    .then(r => r.json())
+    .then(data => {
+      if (data.exito) {
+        cerrarModalRegaloAdmin();
+        mostrarToast(esEdicion ? `✅ Regalo "${nombre}" actualizado.` : `✅ Regalo "${nombre}" agregado.`);
+        cargarProductos();
+        // Si el panel está abierto, actualizar la lista
+        if (!document.getElementById("panel-admin").classList.contains("hidden")) {
+          setTimeout(renderizarListaAdmin, 1200);
+        }
+      } else {
+        // Token expirado
+        if (data.error === "No autorizado") {
+          errEl.textContent = "La sesión admin expiró. Cierra y vuelve a iniciar sesión.";
+          adminToken = "";
+          sessionStorage.removeItem("apto_admin_token");
+        } else {
+          errEl.textContent = data.error || "No se pudo guardar. Intenta de nuevo.";
+        }
+      }
+    })
+    .catch(() => {
+      errEl.textContent = "Error de conexión. Intenta de nuevo.";
+    })
+    .finally(() => {
+      btn.disabled    = false;
+      btn.textContent = "Guardar 💾";
+    });
+}
+
+// ─────────────────────────────────────────
+// 16. ADMIN — ELIMINAR REGALO
+// ─────────────────────────────────────────
+function eliminarRegaloAdmin(id) {
+  const producto = productosCache.find(p => p.id === id);
+  const nombre   = producto ? producto.nombre : id;
+
+  if (!confirm(`¿Eliminar el regalo "${nombre}" de la lista?\nEsta acción no se puede deshacer.`)) return;
+
+  const url = `${SCRIPT_URL}?accion=eliminarRegalo&adminToken=${encodeURIComponent(adminToken)}&id=${encodeURIComponent(id)}`;
+
+  fetch(url, { cache: "no-store" })
+    .then(r => r.json())
+    .then(data => {
+      if (data.exito) {
+        mostrarToast(`🗑️ Regalo "${nombre}" eliminado.`);
+        // Optimistic update
+        productosCache = productosCache.filter(p => p.id !== id);
+        renderizarProductos();
+        actualizarStats();
+        renderizarRanking();
+        renderizarListaAdmin();
+        setTimeout(cargarProductos, 1500);
+      } else {
+        if (data.error === "No autorizado") {
+          mostrarToast("⚠️ Sesión admin expirada. Inicia sesión de nuevo.");
+          adminToken = "";
+          sessionStorage.removeItem("apto_admin_token");
+        } else {
+          mostrarToast(`⚠️ ${data.error || "No se pudo eliminar."}`);
+        }
+      }
+    })
+    .catch(() => mostrarToast("⚠️ Error de conexión."));
 }
