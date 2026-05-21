@@ -83,20 +83,34 @@ function reservarProducto(id, quien, email, mensaje) {
 
   const hoja = obtenerHoja();
   const datos = hoja.getDataRange().getValues();
+  const enc   = datos[0];
+
+  // Encontrar columnas por nombre (robusto ante cualquier orden)
+  var colId      = enc.indexOf("id");
+  var colTomado  = enc.indexOf("tomado");
+  var colQuien   = enc.indexOf("quien");
+  var colEmail   = enc.indexOf("email");
+  var colMensaje = enc.indexOf("mensaje");
+
+  if (colId === -1 || colTomado === -1 || colEmail === -1) {
+    return respuesta({ exito: false, error: "Estructura de hoja inválida. Verifica los encabezados." });
+  }
 
   for (var i = 1; i < datos.length; i++) {
-    if (String(datos[i][0]) === String(id)) {
+    if (String(datos[i][colId]).trim() === String(id).trim()) {
 
       // Ya está reservado
-      if (datos[i][2] === true || String(datos[i][2]).toUpperCase() === "TRUE") {
+      if (datos[i][colTomado] === true || String(datos[i][colTomado]).toUpperCase() === "TRUE") {
         return respuesta({ exito: false, error: "Ya reservado" });
       }
 
       // Marcar como reservado
-      hoja.getRange(i + 1, 3).setValue(true);
-      hoja.getRange(i + 1, 4).setValue(quien);
-      hoja.getRange(i + 1, 5).setValue(email);
-      hoja.getRange(i + 1, 6).setValue(mensaje || "");
+      hoja.getRange(i + 1, colTomado  + 1).setValue(true);
+      hoja.getRange(i + 1, colQuien   + 1).setValue(quien);
+      hoja.getRange(i + 1, colEmail   + 1).setValue(email);
+      if (colMensaje !== -1) {
+        hoja.getRange(i + 1, colMensaje + 1).setValue(mensaje || "");
+      }
       SpreadsheetApp.flush();
       return respuesta({ exito: true });
     }
@@ -115,26 +129,40 @@ function cancelarProducto(id, email) {
 
   const hoja = obtenerHoja();
   const datos = hoja.getDataRange().getValues();
+  const enc   = datos[0];
+
+  // Encontrar columnas por nombre
+  var colId      = enc.indexOf("id");
+  var colTomado  = enc.indexOf("tomado");
+  var colQuien   = enc.indexOf("quien");
+  var colEmail   = enc.indexOf("email");
+  var colMensaje = enc.indexOf("mensaje");
+
+  if (colId === -1 || colTomado === -1 || colEmail === -1) {
+    return respuesta({ exito: false, error: "Estructura de hoja inválida. Verifica los encabezados." });
+  }
 
   for (var i = 1; i < datos.length; i++) {
-    if (String(datos[i][0]) === String(id)) {
-      
-      const emailGuardado = String(datos[i][4] || "").toLowerCase();
-      if (emailGuardado !== String(email).toLowerCase()) {
+    if (String(datos[i][colId]).trim() === String(id).trim()) {
+
+      const emailGuardado = String(datos[i][colEmail] || "").trim().toLowerCase();
+      if (emailGuardado !== String(email).trim().toLowerCase()) {
         return respuesta({ exito: false, error: "No tienes permiso para cancelar este regalo." });
       }
 
       // Liberar
-      hoja.getRange(i + 1, 3).setValue(false);
-      hoja.getRange(i + 1, 4).setValue("");
-      hoja.getRange(i + 1, 5).setValue("");
-      hoja.getRange(i + 1, 6).setValue("");
+      hoja.getRange(i + 1, colTomado + 1).setValue(false);
+      hoja.getRange(i + 1, colQuien  + 1).setValue("");
+      hoja.getRange(i + 1, colEmail  + 1).setValue("");
+      if (colMensaje !== -1) {
+        hoja.getRange(i + 1, colMensaje + 1).setValue("");
+      }
       SpreadsheetApp.flush();
       return respuesta({ exito: true });
     }
   }
 
-  return respuesta({ exito: false, error: "Producto no encontrado" });
+  return respuesta({ exito: false, error: "Producto no encontrado. ID buscado: " + id });
 }
 
 // ================================================
