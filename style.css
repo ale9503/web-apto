@@ -1567,3 +1567,14 @@ body {
   color: var(--teal-glow);
   font-family: monospace;
 }
+
+/* ========================================
+   ADMIN — MODALES POR ENCIMA DEL PANEL
+   El panel admin tiene z-index: 200, así que
+   los modales que se abren desde él necesitan
+   z-index mayor para aparecer encima.
+   ======================================== */
+#modal-admin-login,
+#modal-admin-regalo {
+  z-index: 300;
+}
