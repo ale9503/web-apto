@@ -394,6 +394,7 @@ function actualizarMisRegalos() {
         <div class="mis-regalo-text">
           <h4>${escapeHtml(p.nombre)}</h4>
           <p>${formatPrecio(det.precio || 0)}</p>
+          ${det.url || p.url ? `<a href="${det.url || p.url}" target="_blank" rel="noopener noreferrer" class="card-link-tienda" style="font-size: 0.85rem; margin-top: 0.25rem; display: inline-block;">Ver en tienda 🛒</a>` : ""}
         </div>
       </div>
       <button class="btn-quitar" onclick="cancelarRegalo('${p.id}')" id="btn-cancelar-${p.id}">
